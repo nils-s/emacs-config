@@ -1,3 +1,4 @@
+## stuff from github template
 # Compiled
 *.elc
 
@@ -9,3 +10,10 @@
 
 # Undo-tree save-files
 *.~undo-tree
+
+## custom
+elpa/
+eshell/
+transient/
+ido.last
+projectile-bookmarks.eld
