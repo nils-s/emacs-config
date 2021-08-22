@@ -10,12 +10,12 @@
       `(("." . ,(expand-file-name
 		 (concat user-emacs-directory "backups")))))
 
-;; "imports" ------------------------------------------------------
+;;; "imports" ------------------------------------------------------
 
-;;; import package system
+;; import package system
 (require 'package)
 
-;;; list of package archives from which to pull packages
+;; list of package archives from which to pull packages
 (add-to-list 'package-archives
 	     '("melpa" . "http://melpa.org/packages/")
 	     t)
@@ -26,24 +26,24 @@
 	     '("org" . "http://orgmode.org/elpa/")
 	     t)
 
-;;; package repo priorities
+;; package repo priorities
 (setq package-archive-priorities
       '(("melpa" . 99)
 	("org" . 10)
 	("melpa-stable" . 1)
 	("gnu" . 0))) ; ELPA is our last resort...
 
-;;; activate packages
+;; activate packages
 (package-initialize)
 
-;;; fetch available packages
+;; fetch available packages
 ;; option 1: refresh only if there is no package archive (faster)
 (unless package-archive-contents
   (package-refresh-contents))
 ;; option 2: always refresh (safer; use in case emacs shows errors on startup regarding packages not found)
 ;(package-refresh-contents)
 
-;;; list of packages to install; insert new packages here
+;; list of packages to install; insert new packages here
 (setq package-list
       '(magit
 	clj-refactor
@@ -59,26 +59,26 @@
 	solarized-theme
 	cider))
 
-;;; install missing packages
+;; install missing packages
 (dolist (package package-list)
   (unless (package-installed-p package)
     (package-install package)))
 
-;;; if there is a Slime installation (the version from git), configure it
-;;; since this isn't installed from an Emacs package, make sure to only configure it if it is actually present
+;; if there is a Slime installation (the version from git), configure it
+;; since this isn't installed from an Emacs package, make sure to only configure it if it is actually present
 (when (file-directory-p "~/.slime")
   (progn
-   ;;; add Slime; using the version from Git (instead of MELPA), so we need to tell Emacs where to find it
+   ;; add Slime; using the version from Git (instead of MELPA), so we need to tell Emacs where to find it
    (add-to-list 'load-path "~/.slime") ; assumes Slime has been "git clone"-d into ~/.slime
    (require 'slime-autoloads)
    (setq inferior-lisp-program "abcl")
-   ;;; use custom SBCL core including pre-loaded packages (sb-bsd-sockets, sb-posix, sb-introspect, sb-cltl2, asdf)
-   ;;; see https://common-lisp.net/project/slime/doc/html/Loading-Swank-faster.html#Loading-Swank-faster
+   ;; use custom SBCL core including pre-loaded packages (sb-bsd-sockets, sb-posix, sb-introspect, sb-cltl2, asdf)
+   ;; see https://common-lisp.net/project/slime/doc/html/Loading-Swank-faster.html#Loading-Swank-faster
    (setq slime-lisp-implementations
 	 '((abcl ("abcl"))
 	   (sbcl ("sbcl" "--core" "sbcl.core-for-slime"))))))
 
-;; -----------------------------------------------------------------
+;;; -----------------------------------------------------------------
 
 ;; activate solarized theme (only use one!)
 (load-theme 'solarized-dark t)
@@ -125,15 +125,10 @@
  ;; If there is more than one, they won't work right.
  )
 
-;; key bindings
-(global-set-key (kbd "C-x <up>") 'windmove-up)
-(global-set-key (kbd "C-x <down>") 'windmove-down)
-(global-set-key (kbd "C-x <left>") 'windmove-left)
-(global-set-key (kbd "C-x <right>") 'windmove-right)
 
-;; hooks
+;;; hooks and keybindings ------------------------------------------
 
-;;; paredit mode hook so barfing (paren-shrinking) works via ö/ä instead of {/}
+;; paredit mode hook so barfing (paren-shrinking) works via ö/ä instead of {/}
 (defun paredit-barf-key-rebind-hook ()
   "rebinds backward/forward barfing to C-ö/C-ä"
   (define-key paredit-mode-map (kbd "C-ö") 'paredit-backward-barf-sexp)
@@ -153,12 +148,12 @@
 	    (define-key paredit-mode-map (kbd "M-)") 'paredit-backward-wrap-round)))
 
 
-;;; common stuff for lisp modes (paredit, rainbow parens, ...)
+;; common stuff for lisp modes (paredit, rainbow parens, ...)
 (defun lisp-mode-common-config-hooks ()
   (paredit-mode 1)
   (rainbow-delimiters-mode 1))
 
-;;; clojure-specific stuff (clj-refactor, yas, projectile)
+;; clojure-specific stuff (clj-refactor, yas, projectile)
 (require 'clj-refactor)
 (defun clojure-mode-config-hooks ()
   (clj-refactor-mode 1)
@@ -166,7 +161,7 @@
   (projectile-mode 1)
   (cljr-add-keybindings-with-prefix "C-c C-r"))
 
-;;; apply default lisp hooks for lisp/emacs lisp/clojure modes
+;; apply default lisp hooks for lisp/emacs lisp/clojure modes
 (add-hook 'lisp-mode-hook 'lisp-mode-common-config-hooks)
 (add-hook 'inferior-lisp-mode-hook 'lisp-mode-common-config-hooks)
 (add-hook 'emacs-lisp-mode-hook 'lisp-mode-common-config-hooks)
@@ -174,20 +169,26 @@
 (add-hook 'cider-mode-hook 'lisp-mode-common-config-hooks)
 (add-hook 'cider-repl-mode-hook 'lisp-mode-common-config-hooks)
 
-;;; clojure-specific hooks
+;; clojure-specific hooks
 (add-hook 'clojure-mode-hook 'clojure-mode-config-hooks)
 (add-hook 'cider-mode-hook 'clojure-mode-config-hooks)
 
-;;; SLIME/Common Lisp hooks
+;; SLIME/Common Lisp hooks
 (add-hook 'lisp-mode-hook (lambda () (slime-mode 1)))
 (add-hook 'inferior-lisp-mode-hook (lambda () (inferior-slime-mode 1)))
 
-;;; SLIME/Common Lisp config stuff
+;; SLIME/Common Lisp config stuff
 (setq lisp-indent-function 'common-lisp-indent-function
       slime-complete-symbol-function 'slime-fuzzy-complete-symbol
       common-lisp-hyperspec-root "file:///home/nils/cl/HyperSpec")
 
-;;; additional (non-hook) functions
+;; key bindings for more efficient moving between windows
+(global-set-key (kbd "C-x <up>") 'windmove-up)
+(global-set-key (kbd "C-x <down>") 'windmove-down)
+(global-set-key (kbd "C-x <left>") 'windmove-left)
+(global-set-key (kbd "C-x <right>") 'windmove-right)
+
+;; additional (non-hook) functions
 (global-set-key (kbd "C-S-n")
 		(lambda ()
 		  (interactive)
@@ -201,7 +202,7 @@
 		  (interactive)
 		  (join-line -1)))
 
-;;; stolen from some other guy's config somewhere on the 'net: org-mode section stats fix
+;; stolen from some other guy's config somewhere on the 'net: org-mode section stats fix
 (defun org-mode-update-section-item-stats ()
   (when (equal major-mode 'org-mode)
     (save-excursion
