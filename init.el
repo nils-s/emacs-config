@@ -71,12 +71,12 @@
    ;; add Slime; using the version from Git (instead of MELPA), so we need to tell Emacs where to find it
    (add-to-list 'load-path "~/.slime") ; assumes Slime has been "git clone"-d into ~/.slime
    (require 'slime-autoloads)
-   (setq inferior-lisp-program "abcl")
-   ;; use custom SBCL core including pre-loaded packages (sb-bsd-sockets, sb-posix, sb-introspect, sb-cltl2, asdf)
+   (setq inferior-lisp-program "sbcl")
+   ;; to use custom SBCL core including pre-loaded packages (e.g. sb-bsd-sockets, sb-posix, asdf, ...),
    ;; see https://common-lisp.net/project/slime/doc/html/Loading-Swank-faster.html#Loading-Swank-faster
    (setq slime-lisp-implementations
-	 '((abcl ("abcl"))
-	   (sbcl ("sbcl" "--core" "sbcl.core-for-slime"))))))
+	 '((sbcl ("sbcl"))
+	   (abcl ("abcl"))))))
 
 ;;; -----------------------------------------------------------------
 
