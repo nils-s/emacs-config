@@ -112,10 +112,9 @@
  ;; If there is more than one, they won't work right.
  '(ansi-color-faces-vector
    [default default default italic underline success warning error])
- '(frame-background-mode (quote dark))
+ '(frame-background-mode 'dark)
  '(package-selected-packages
-   (quote
-    (actionscript-mode markdown-mode rainbow-delimiters org-projectile yasnippet-snippets flx-ido clojure-snippets magit clj-refactor))))
+   '(actionscript-mode markdown-mode rainbow-delimiters org-projectile yasnippet-snippets flx-ido clojure-snippets magit clj-refactor)))
 
 ;; even though it's empty, it's still necessary; if removed emacs will re-insert it at the end of the file
 (custom-set-faces
