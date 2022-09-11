@@ -17,13 +17,13 @@
 
 ;; list of package archives from which to pull packages
 (add-to-list 'package-archives
-	     '("melpa" . "http://melpa.org/packages/")
+	     '("melpa" . "https://melpa.org/packages/")
 	     t)
 (add-to-list 'package-archives
-	     '("melpa-stable" . "http://stable.melpa.org/packages/")
+	     '("melpa-stable" . "https://stable.melpa.org/packages/")
 	     t)
 (add-to-list 'package-archives
-	     '("org" . "http://orgmode.org/elpa/")
+	     '("org" . "https://orgmode.org/elpa/")
 	     t)
 
 ;; package repo priorities
