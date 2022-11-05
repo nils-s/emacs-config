@@ -1,3 +1,10 @@
+;;;
+;;; Do not manually edit this file. It is automatically generated from config.org, change that file instead.
+;;;
+
+;;; Reset Emacs to minimal -----------------------------------------------------
+
+
 ;; first things first: get rid of superfluous UI parts
 (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
 (if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
@@ -5,35 +12,59 @@
 (setq inhibit-startup-message t)
 (setq inhibit-startup-echo-area-message t)
 
+;; prevent customize from polluting our carefully-crafted init file :) instead, store that crap in its own file
+(customize-save-variable 'custom-file (expand-file-name "custom.el" user-emacs-directory))
+(load-file custom-file)
+
 ;; store backup files in their own directory
 (setq backup-directory-alist
       `(("." . ,(expand-file-name
-		 (concat user-emacs-directory "backups")))))
+                 (concat user-emacs-directory "backups")))))
 
-;;; "imports" ------------------------------------------------------
+;; start maximized
+(add-hook 'window-setup-hook 'toggle-frame-maximized t)
 
-;; import package system
+
+;;; custom variables -----------------------------------------------------------
+
+
+(defconst nils/slime-dir "~/.slime/"
+  "Directory into which SLIME has been 'git clone'-d")
+
+(defconst nils/hyperspec-location (let* ((expanded-home-dir (expand-file-name "~"))
+                                         (hyperspec-base-dir (file-name-concat expanded-home-dir "cl/hyperspec/")))
+                                    (concat "file://" hyperspec-base-dir))
+  "Base URL to Common Lisp HyperSpec")
+
+(defconst nils/projects-dir "~/code"
+  "Directory for projectile to search for (code) projects")
+
+
+;;; package system setup -------------------------------------------------------
+
+
+;; "activate" package system
 (require 'package)
 
 ;; list of package archives from which to pull packages
 (add-to-list 'package-archives
-	     '("melpa" . "http://melpa.org/packages/")
-	     t)
+             '("melpa" . "https://melpa.org/packages/")
+             t)
 (add-to-list 'package-archives
-	     '("melpa-stable" . "http://stable.melpa.org/packages/")
-	     t)
+             '("melpa-stable" . "https://stable.melpa.org/packages/")
+             t)
 (add-to-list 'package-archives
-	     '("org" . "http://orgmode.org/elpa/")
-	     t)
+             '("org" . "https://orgmode.org/elpa/")
+             t)
 
 ;; package repo priorities
 (setq package-archive-priorities
       '(("melpa" . 99)
-	("org" . 10)
-	("melpa-stable" . 1)
-	("gnu" . 0))) ; ELPA is our last resort...
+        ("org" . 10)
+        ("melpa-stable" . 1)
+        ("gnu" . 0))) ; ELPA is our last resort...
 
-;; activate packages
+;; initialize package system
 (package-initialize)
 
 ;; fetch available packages
@@ -43,97 +74,296 @@
 ;; option 2: always refresh (safer; use in case emacs shows errors on startup regarding packages not found)
 ;(package-refresh-contents)
 
-;; list of packages to install; insert new packages here
-(setq package-list
-      '(magit
-	clj-refactor
-	clojure-snippets
-	flx-ido
-	yasnippet
-	yasnippet-snippets
-	org-projectile
-	projectile
-	rainbow-delimiters
-	paredit
-	markdown-mode
-	solarized-theme
-	cider))
-
-;; install missing packages
-(dolist (package package-list)
-  (unless (package-installed-p package)
-    (package-install package)))
-
-;; if there is a Slime installation (the version from git), configure it
-;; since this isn't installed from an Emacs package, make sure to only configure it if it is actually present
-(when (file-directory-p "~/.slime")
-  (progn
-   ;; add Slime; using the version from Git (instead of MELPA), so we need to tell Emacs where to find it
-   (add-to-list 'load-path "~/.slime") ; assumes Slime has been "git clone"-d into ~/.slime
-   (require 'slime-autoloads)
-   (setq inferior-lisp-program "sbcl")
-   ;; to use custom SBCL core including pre-loaded packages (e.g. sb-bsd-sockets, sb-posix, asdf, ...),
-   ;; see https://common-lisp.net/project/slime/doc/html/Loading-Swank-faster.html#Loading-Swank-faster
-   (setq slime-lisp-implementations
-	 '((sbcl ("sbcl"))
-	   (abcl ("abcl"))))))
-
-;;; -----------------------------------------------------------------
-
-;; activate solarized theme (only use one!)
-(load-theme 'solarized-dark t)
-;(load-theme 'solarized-light t)
+;; set up use-package for package management: install it, load it, make sure it automatically installs missing packages
+(unless (package-installed-p 'use-package)
+  (package-install 'use-package))
+(require 'use-package)
+(setq use-package-always-ensure t)
 
 
-;; disable VC for Git (-> Magit for Git, VC for everything else)
-(setq vc-handled-backends (delq 'Git vc-handled-backends))
-;; to also back up files under VCS control, uncomment this:
-;; (setq vc-make-backup-files t)
-
-;; Magit status buffer hotkey
-(global-set-key (kbd "C-x g") 'magit-status)
-
-;; 150 cols x 50 lines (-> decent window size)
-(setq initial-frame-alist '((top . 1) (left . 1) (width . 150) (height . 50)))
-
-;; IDO auto-complete with flx fuzzy matching
-(require 'flx-ido)
-(ido-mode 1)
-(ido-everywhere 1)
-(flx-ido-mode 1)
-(setq ido-enable-flex-matching t)
-(setq ido-use-faces nil) ; use flx faces instead of ido defaults
-
-;; auto-configured stuff (via "wizard"-like dialogs)
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(ansi-color-faces-vector
-   [default default default italic underline success warning error])
- '(frame-background-mode 'dark)
- '(package-selected-packages
-   '(actionscript-mode markdown-mode rainbow-delimiters org-projectile yasnippet-snippets flx-ido clojure-snippets magit clj-refactor)))
-
-;; even though it's empty, it's still necessary; if removed emacs will re-insert it at the end of the file
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+;;; install packages -----------------------------------------------------------
 
 
-;;; hooks and keybindings ------------------------------------------
+;;--- appearance and visuals ---
 
-;; paredit mode hook so barfing (paren-shrinking) works via ö/ä instead of {/}
-(defun paredit-barf-key-rebind-hook ()
-  "rebinds backward/forward barfing to C-ö/C-ä"
-  (define-key paredit-mode-map (kbd "C-ö") 'paredit-backward-barf-sexp)
-  (define-key paredit-mode-map (kbd "C-ä") 'paredit-forward-barf-sexp))
 
-(defun paredit-backward-wrap-round ()
+;; icons :)
+;; on freshly-set-up machines, needs "M-x all-the-icons-install-fonts" on first run, to install necessary OS fonts
+(use-package all-the-icons)
+(use-package all-the-icons-dired
+    :hook
+    (dired-mode . all-the-icons-dired-mode))
+
+;; slightly adapted solarized theme that works well with doom-modeline
+;; other available themes in the package: see https://github.com/doomemacs/themes
+(use-package doom-themes
+    :init
+    (load-theme 'doom-solarized-dark t)) ; t suppresses "loading themes is dangerous..."-prompt
+
+;; clean, modern modeline
+(use-package doom-modeline
+    :init
+    (doom-modeline-mode 1))
+
+
+;;--- suggestions and auto-complete ---
+
+
+;; suggestions and selection in minibuffer
+(use-package ivy
+    :diminish ivy-mode
+    :config
+    (ivy-mode 1)
+    :bind
+    (("C-s" . swiper) ; enhanced search (swiper instead of Emacs standard)
+     :map ivy-minibuffer-map
+     ("TAB" . ivy-alt-done) ; select and apply option (instead of selecting, and applying via <enter>)
+     :map ivy-switch-buffer-map
+     ("TAB" . ivy-done))) ; <tab> will directly switch to the selected buffer
+
+;; additional information for ivy selection options in minibuffer
+(use-package ivy-rich
+    :init
+    (ivy-rich-mode 1))
+
+ ;; ivy-enhanced emacs commands
+(use-package counsel
+    :bind
+    (("M-x" . counsel-M-x)
+     ("C-x b" . counsel-ibuffer)
+     ("C-x C-f" . counsel-find-file)
+     :map minibuffer-local-map
+     ("C-r" . 'counsel-minibuffer-history)))
+
+;; key combination hints for the current, incomplete key chord
+(use-package which-key
+    :diminish which-key-mode
+    :init
+    (which-key-mode)
+    :config
+    (setq which-key-idle-delay 0.5))
+
+;; emacs help system on steroids
+(use-package helpful
+    :custom
+    (counsel-describe-function-function #'helpful-callable)
+    (counsel-describe-variable-function #'helpful-variable)
+    :bind
+    (([remap describe-function] . counsel-describe-function)
+     ([remap describe-command] . helpful-command)
+     ([remap describe-variable] . counsel-describe-variable)
+     ([remap describe-key] . helpful-key)))
+
+
+;;--- general coding/dev stuff ---
+
+
+;; project management
+(use-package projectile
+    :diminish projectile-mode
+    :init
+    (when (file-directory-p nils/projects-dir)
+      (setq projectile-project-search-path (list nils/projects-dir)))
+    (setq projectile-switch-project-action #'projectile-dired)
+    :config
+    (projectile-mode)
+    :custom
+    ((projectily-completion-system 'ivy))
+    :bind-keymap
+    ("C-c p" . projectile-command-map))
+
+;; ivy/counsel extension for projectile; nicer projects list etc.
+(use-package counsel-projectile
+    :config
+    (counsel-projectile-mode))
+
+;; git
+(use-package magit)
+
+;; snippet functionality
+(use-package yasnippet
+    :config
+    (setq yas-snippet-dirs `(,(file-name-concat user-emacs-directory "snippets")))
+    (yas-reload-all) ; load snippet tables; necessary since yas-global-mode is not enabled
+    :hook
+    (prog-mode . yas-minor-mode))
+
+;; some pre-defined snippets for yasnippet
+(use-package yasnippet-snippets)
+
+;; rainbow parens
+(use-package rainbow-delimiters
+    :hook
+    (prog-mode . rainbow-delimiters-mode))
+
+
+;;--- org mode ---
+
+
+(defun nils/org-mode-setup ()
+  (org-indent-mode) ; indent content according to outline
+  (visual-line-mode 1)) ; auto-wrap long lines
+
+(defun nils/org-agenda-mode-setup ()
+  (setq org-agenda-start-day "-2d")) ; agenda view: two past days + future; setting doesn't work in :config or :custom, so set it via :hook
+
+(defconst nils/org-structure-templates '(("el" . "src emacs-lisp")
+                                         ("cl" . "src lisp")
+                                         ("clj" . "src clojure")
+                                         ("r" . "src R")
+                                         ("py" . "src python")
+                                         ("sh" . "src shell")
+                                         ("sql" . "src sql"))
+  "Custom snippet templates for org-mode to use with org-tempo")
+
+(defun nils/add-custom-org-structure-templates (templates)
+  "Add the given TEMPLATES for use with org-tempo.
+
+TEMPLATES must be an alist containing (KEY . VALUE) pairs
+that are added to the variable `org-structure-template-alist'."
+  (mapcar (lambda (template) (add-to-list 'org-structure-template-alist template)) nils/org-structure-templates))
+
+;; font config stuff; doesn't work as intended, so for now it's commented out; TODO: investigate solution + fix this!
+;(defun nils/font-or-family (font family)
+;  "Check if the given FONT is available, or fall back to FAMILY
+;
+;Return a list of the form (TYPE . NAME), where
+;TYPE is either :font or :family, and
+;NAME is the value of either FONT or FAMILY,
+;depending on whether FONT is available."
+;  (if (x-list-fonts font)
+;      '(:font font)
+;      '(:family family)))
+;
+;(defconst nils/font-serif (nils/font-or-family "Noto Serif" "normal"))
+;(defconst nils/font-sans (nils/font-or-family "Noto Sans" "sans serif"))
+;(defconst nils/font-serif (nils/font-or-family "Noto Sans Mono" "mono"))
+
+
+;; declarative org-mode capture templates
+(use-package doct
+    :commands (doct)) ; defer loading the package until doct function is invoked
+
+(defconst nils/capture-templates
+  '(("Tasks" :keys "t"
+     :file (lambda () (file-name-concat (car org-agenda-files) "gtd.org")) ; must be a lambda: org-agenda-files is not defined yet
+     :prepend t
+     :empty-lines 1
+     :kill-buffer t
+     :template ("* TODO %^{Description}"
+                ":PROPERTIES:"
+                ":Created: %U"
+                ":Location: %a"
+                ":END:"
+                "%?")
+     :children (("Todo" :keys "t"
+                 :headline "Inbox")))))
+
+
+
+(defconst nils/agenda-commands
+  '(("o" "Overview"
+     ((agenda "" ((org-deadline-warning-days 7)))
+      (todo "NEXT" ((org-agenda-overriding-header "Next Tasks")))))))
+
+
+(use-package org
+    :config
+    (require 'org-tempo) ; org-mode specific integrated snippets
+    (nils/add-custom-org-structure-templates nils/org-structure-templates)
+    :custom
+    (org-hide-emphasis-markers t)
+    (org-ellipsis " ⋮")
+    (org-agenda-files `(,(file-name-concat org-directory "agenda/")))
+    (org-agenda-span 10)
+    (org-agenda-start-on-weekday nil) ; start today instead of on a fixed weekday
+    (org-todo-keywords '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d!)" "CANCELED(c@)")))
+    (org-capture-templates (doct nils/capture-templates))
+    (org-agenda-custom-commands nils/agenda-commands)
+;; more non-working font config stuff, see above; TODO: investigate solution + fix this!
+;    :custom-face
+;    (org-document-title ((t (:height 2.0))))
+;    (org-level-1 ((t (:inherit default :weight bold :height 1.5 (car nils/font-sans) (cdr nils/font-sans)))))
+;    (org-level-2 ((t (:height 1.25 (car nils/font-sans) (cdr nils/font-sans)))))
+;    (org-level-3 ((t (:height 1.1 (car nils/font-sans) (cdr nils/font-sans)))))
+;    (org-level-4 ((t (:height 1.05 (car nils/font-sans) (cdr nils/font-sans)))))
+;    (org-level-5 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
+;    (org-level-6 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
+;    (org-level-7 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
+;    (org-level-8 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
+    :hook
+    (org-mode . nils/org-mode-setup)
+    (org-agenda-mode . nils/org-agenda-mode-setup)
+    :bind
+    (("C-c c" . org-capture)
+     ("C-c t" . (lambda () (interactive) (org-capture nil "tt"))))) ; directly capture a GTD inbox task
+
+;; more non-working font config stuff, see above; TODO: investigate solution + fix this!
+;(defconst headline '(:inherit 'default :weight bold))
+;
+;(custom-theme-set-faces
+;   'user
+;   '(org-document-title ((t (:height 2.0))))
+;   `(org-level-1 ((t (,@headline ,@nils/font-sans :height 1.75))))
+;   `(org-level-2 ((t (,@headline ,@nils/font-sans :height 1.5))))
+;   `(org-level-3 ((t (,@headline ,@nils/font-sans :height 1.25))))
+;   `(org-level-4 ((t (,@headline ,@nils/font-sans :height 1.1))))
+;   `(org-level-5 ((t (,@headline ,@nils/font-sans))))
+;   `(org-level-6 ((t (,@headline ,@nils/font-sans))))
+;   `(org-level-7 ((t (,@headline ,@nils/font-sans))))
+;   `(org-level-8 ((t (,@headline ,@nils/font-sans))))
+;   '(org-block ((t (:inherit fixed-pitch))))
+;   '(org-code ((t (:inherit (shadow fixed-pitch)))))
+;   '(org-document-info ((t (:foreground "dark orange"))))
+;   '(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
+;   '(org-indent ((t (:inherit (org-hide fixed-pitch)))))
+;   '(org-link ((t (:foreground "royal blue" :underline t))))
+;   '(org-meta-line ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+;   '(org-property-value ((t (:inherit fixed-pitch))) t)
+;   '(org-special-keyword ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+;   '(org-table ((t (:inherit fixed-pitch :foreground "#83a598"))))
+;   '(org-tag ((t (:inherit (shadow fixed-pitch) :weight bold :height 0.8))))
+;   '(org-verbatim ((t (:inherit (shadow fixed-pitch))))))
+
+(use-package org-bullets
+    :after org
+    :custom
+    (org-bullets-bullet-list '("◉"))
+    :hook
+    (org-mode . org-bullets-mode))
+
+(defun org-mode-update-section-item-stats ()
+  "Update all statistics cookies in the current org-file"
+  (when (equal major-mode 'org-mode)
+    (ignore-errors
+      (org-update-statistics-cookies t))))
+
+(defadvice org-kill-line (after fix-cookies activate)
+  "fix statistics cookies after org-mode-killing a line"
+  (org-mode-update-section-item-stats))
+
+(defadvice kill-whole-line (after fix-cookies activate)
+  "fix statistics cookies after killing a line"
+  (org-mode-update-section-item-stats))
+
+(defun nils/vis-fill-setup ()
+  (setq visual-fill-column-width 150 ; text area width is 150 chars
+        visual-fill-column-center-text t) ; text area is centered
+  (visual-fill-column-mode 1))
+
+;; make org-mode feel more wordprocessor-y by giving the text some whitespace at the sides
+(use-package visual-fill-column
+    :hook
+    (org-mode . nils/vis-fill-setup))
+
+
+;;--- Lisp and related things ---
+
+
+;; SLIME-y Clojure(Script) :)
+(use-package cider)
+
+(defun nils/paredit-backward-wrap-round ()
   "wrap preceding sexp"
   (interactive)
   (forward-sexp -1)
@@ -141,45 +371,112 @@
   (insert " ")
   (forward-char -1))
 
-(add-hook 'paredit-mode-hook 'paredit-barf-key-rebind-hook)
-(add-hook 'paredit-mode-hook
-	  (lambda ()
-	    (define-key paredit-mode-map (kbd "M-)") 'paredit-backward-wrap-round)))
+;; paren-matching
+(use-package paredit
+    :hook
+    ((lisp-mode
+      inferior-lisp-mode
+      lisp-interaction-mode
+      emacs-lisp-mode
+      ielm-mode ; inferior emacs lisp mode
+      clojure-mode
+      cider-mode
+      cider-repl-mode
+      scheme-mode
+      eval-expression-minibuffer-setup) . paredit-mode)
+    :bind
+    (:map paredit-mode-map
+     ("C-ö" . paredit-backward-barf-sexp) ; rebind command for easier access on DE keyboard layout
+     ("C-ä" . paredit-forward-barf-sexp) ; rebind command for easier access on DE keyboard layout
+     ("M-)" . nils/paredit-backward-wrap-around)))
 
-
-;; common stuff for lisp modes (paredit, rainbow parens, ...)
-(defun lisp-mode-common-config-hooks ()
-  (paredit-mode 1)
-  (rainbow-delimiters-mode 1))
-
-;; clojure-specific stuff (clj-refactor, yas, projectile)
-(require 'clj-refactor)
-(defun clojure-mode-config-hooks ()
-  (clj-refactor-mode 1)
-  (yas-minor-mode 1)
-  (projectile-mode 1)
-  (cljr-add-keybindings-with-prefix "C-c C-r"))
-
-;; apply default lisp hooks for lisp/emacs lisp/clojure modes
-(add-hook 'lisp-mode-hook 'lisp-mode-common-config-hooks)
-(add-hook 'inferior-lisp-mode-hook 'lisp-mode-common-config-hooks)
-(add-hook 'emacs-lisp-mode-hook 'lisp-mode-common-config-hooks)
-(add-hook 'clojure-mode-hook 'lisp-mode-common-config-hooks)
-(add-hook 'cider-mode-hook 'lisp-mode-common-config-hooks)
-(add-hook 'cider-repl-mode-hook 'lisp-mode-common-config-hooks)
-
-;; clojure-specific hooks
-(add-hook 'clojure-mode-hook 'clojure-mode-config-hooks)
-(add-hook 'cider-mode-hook 'clojure-mode-config-hooks)
-
-;; SLIME/Common Lisp hooks
-(add-hook 'lisp-mode-hook (lambda () (slime-mode 1)))
-(add-hook 'inferior-lisp-mode-hook (lambda () (inferior-slime-mode 1)))
+;; if there is a Slime installation (the version from git), configure it
+;; since this isn't installed from an Emacs package, make sure to only configure it if it is actually present
+(when (file-directory-p nils/slime-dir)
+  (progn
+   ;; add Slime; using the version from Git (instead of MELPA), so we need to tell Emacs where to find it
+   (add-to-list 'load-path nils/slime-dir)
+   (require 'slime-autoloads)
+   (setq inferior-lisp-program "sbcl")
+   ;; to use custom SBCL core including pre-loaded packages (e.g. sb-bsd-sockets, sb-posix, asdf, ...),
+   ;; see https://common-lisp.net/project/slime/doc/html/Loading-Swank-faster.html#Loading-Swank-faster
+   (setq slime-lisp-implementations
+         '((sbcl ("sbcl"))
+           (abcl ("abcl"))))
+   ;; SLIME/Common Lisp hooks
+   (add-hook 'slime-repl-mode-hook (lambda () (paredit-mode 1)))
+   (add-hook 'lisp-mode-hook (lambda () (slime-mode 1)))
+   (add-hook 'inferior-lisp-mode-hook (lambda () (inferior-slime-mode 1)))))
 
 ;; SLIME/Common Lisp config stuff
 (setq lisp-indent-function 'common-lisp-indent-function
       slime-complete-symbol-function 'slime-fuzzy-complete-symbol
-      common-lisp-hyperspec-root "file:///home/nils/cl/HyperSpec")
+      common-lisp-hyperspec-root nils/hyperspec-location)
+
+
+
+;;; misc stuff -----------------------------------------------------------------
+
+
+;; turn on line numbers on the left, and current column in the mode line
+(global-display-line-numbers-mode)
+(column-number-mode)
+
+;; turn line numbers off for some modes (e.g. shell)
+(dolist (mode '(shell-mode-hook
+                eshell-mode-hook
+                org-mode-hook))
+  (add-hook mode (lambda () (display-line-numbers-mode 0))))
+
+;; disable VC for Git (-> Magit for Git, VC for everything else)
+(setq vc-handled-backends (delq 'Git vc-handled-backends))
+;; to also back up files under VCS control, uncomment this:
+;; (setq vc-make-backup-files t)
+
+
+;;; key bindings ---------------------------------------------------------------
+
+
+;;--- helper functions (for keybindings etc.) ---
+
+(defun nils/open-line-below ()
+  (interactive)
+  (end-of-line)
+  (newline)
+  (indent-for-tab-command))
+
+(defun nils/open-line-above ()
+  (interactive)
+  (beginning-of-line)
+  (newline)
+  (forward-line -1)
+  (indent-for-tab-command))
+
+(defun nils/move-line-down ()
+  (interactive)
+  (let ((col (current-column)))
+    (forward-line)
+    (transpose-lines 1)
+    (forward-line -1)
+    (move-to-column col)))
+
+(defun nils/move-line-up ()
+  (interactive)
+  (let ((col (current-column)))
+    (transpose-lines 1)
+    (forward-line -2)
+    (move-to-column col)))
+
+
+;;--- global key bindings ---
+
+;; insert empty line below/above current line
+(global-set-key (kbd "<C-return>") 'nils/open-line-below)
+(global-set-key (kbd "<C-S-return>") 'nils/open-line-above)
+
+;; move current line down/up (i.e. swap current line with the one below/above)
+(global-set-key (kbd "<C-S-down>") 'nils/move-line-down)
+(global-set-key (kbd "<C-S-up>") 'nils/move-line-up)
 
 ;; key bindings for more efficient moving between windows
 (global-set-key (kbd "C-x <up>") 'windmove-up)
@@ -187,67 +484,26 @@
 (global-set-key (kbd "C-x <left>") 'windmove-left)
 (global-set-key (kbd "C-x <right>") 'windmove-right)
 
-;; additional (non-hook) functions
+;; C-n/C-p x10
 (global-set-key (kbd "C-S-n")
-		(lambda ()
-		  (interactive)
-		  (ignore-errors (next-line 10))))
+                (lambda ()
+                  (interactive)
+                  (ignore-errors (next-line 10))))
 (global-set-key (kbd "C-S-p")
-		(lambda ()
-		  (interactive)
-		  (ignore-errors (previous-line 10))))
+                (lambda ()
+                  (interactive)
+                  (ignore-errors (previous-line 10))))
+
+;; join current and next line by pulling next line up into current line
 (global-set-key (kbd "M-j")
-		(lambda ()
-		  (interactive)
-		  (join-line -1)))
+                (lambda ()
+                  (interactive)
+                  (join-line -1)))
 
-;; stolen from some other guy's config somewhere on the 'net: org-mode section stats fix
-(defun org-mode-update-section-item-stats ()
-  (when (equal major-mode 'org-mode)
-    (save-excursion
-      (ignore-errors
-	(org-back-to-heading)
-	(org-update-parent-todo-statistics)))))
-(defadvice org-kill-line (after fix-cookies activate) (org-mode-update-section-item-stats))
-(defadvice kill-whole-line (after fix-cookies activate) (org-mode-update-section-item-stats))
 
-(defmacro rename-modeline (package-name mode new-name)
-  `(eval-after-load ,package-name
-     '(defadvice ,mode (after rename-modeline activate) (setq mode-name ,new-name))))
-(rename-modeline "clojure-mode" clojure-mode "clj")
+;;; enable some emacs features that are disabled by default --------------------
 
-(defun open-line-below ()
-  (interactive)
-  (end-of-line)
-  (newline)
-  (indent-for-tab-command))
 
-(defun open-line-above ()
-  (interactive)
-  (beginning-of-line)
-  (newline)
-  (forward-line -1)
-  (indent-for-tab-command))
-
-(global-set-key (kbd "<C-return>") 'open-line-below)
-(global-set-key (kbd "<C-S-return>") 'open-line-above)
-
-(defun move-line-down ()
-  (interactive)
-  (let ((col (current-column)))
-    (save-excursion
-      (forward-line)
-      (transpose-lines 1))
-    (move-to-column col)))
-
-(defun move-line-up ()
-  (interactive)
-  (let ((col (current-column)))
-    (save-excursion
-      (forward-line)
-      (transpose-lines -1))
-    (move-to-column col)))
-
-(global-set-key (kbd "<C-S-down>") 'move-line-down)
-(global-set-key (kbd "<C-S-up>") 'move-line-up)
+;; enable up-/down-case selected region functions (C-x C-u / C-x C-l)
 (put 'upcase-region 'disabled nil)
+(put 'downcase-region 'disabled nil)
