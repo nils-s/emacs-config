@@ -1,0 +1,670 @@
+#+title: Emacs configuration file, literate programming style
+#+author: nils-s
+
+* Documented Emacs Configuration File
+
+This file contains my complete Emacs configuration as a collection of documented code blocks. The .el file used by Emacs can be generated from this file using org-babel-tangle. Thus, this file serves as the single source of truth for my configuration file, as well as documenting the configuration.
+
+Individual aspects of the configuration have their own sections in this document, which will be combined during the =tangle= step. The structure of the final file will be like this:
+
+#+begin_src emacs-lisp :noweb yes :tangle init.el
+
+  ;;;
+  ;;; Do not manually edit this file. It is automatically generated from config.org, change that file instead.
+  ;;;
+
+  ;;; Reset Emacs to minimal -----------------------------------------------------
+
+  <<reset>>
+
+  ;;; custom variables -----------------------------------------------------------
+
+  <<config-vars>>
+
+  ;;; package system setup -------------------------------------------------------
+
+  <<setup-package-system>>
+
+  ;;; install packages -----------------------------------------------------------
+
+  <<install-packages>>
+
+  ;;; misc stuff -----------------------------------------------------------------
+
+  <<misc-settings>>
+
+  ;;; key bindings ---------------------------------------------------------------
+
+  <<keybindings>>
+
+  ;;; enable some emacs features that are disabled by default --------------------
+
+  <<emacs-features>>
+
+#+end_src
+
+** Usage
+
+The Emacs startup configuration file can be generated from this file using the ~org-babel-tangle~ function in org-mode (by default bound to =C-c C-v t=). On freshly-installed Emacsen the file can also be tangled from the shell, using the following command:
+
+#+begin_src shell
+
+emacs -Q --eval="(progn (org-mode) (org-babel-tangle-file \"config.org\") (save-buffers-kill-emacs))"
+  
+#+end_src
+
+By tangling the file from the command line an Emacs config can be generated even before using Emacs for the first time (or at least before using it for the first time for real, if we count running the command line tangling), thereby saving us from having to use a vanilla Emacs :)
+
+* Resetting Emacs' Default Configuration
+
+Before configuring custom settings, some Emacs defaults are set to more sensible settings. This includes the following things:
+
+- maximize Emacs on startup
+- remove the menu bar, scroll bar, startup message, etc.
+- prevent Emacs' customization system from writing its configured settings into the manually-written config file;
+  write those settings to a different file instead, so the main config file remains readable
+- store all backup files in a "backups" directory in the Emacs directory (instead of storing them next to the files they belong to)
+
+#+name: reset
+#+begin_src emacs-lisp
+
+  ;; first things first: get rid of superfluous UI parts
+  (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
+  (if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
+  (if (fboundp 'menu-bar-mode) (menu-bar-mode -1))
+  (setq inhibit-startup-message t)
+  (setq inhibit-startup-echo-area-message t)
+
+  ;; prevent customize from polluting our carefully-crafted init file :) instead, store that crap in its own file
+  (customize-save-variable 'custom-file (expand-file-name "custom.el" user-emacs-directory))
+  (load-file custom-file)
+
+  ;; store backup files in their own directory
+  (setq backup-directory-alist
+        `(("." . ,(expand-file-name
+                   (concat user-emacs-directory "backups")))))
+
+  ;; start maximized
+  (add-hook 'window-setup-hook 'toggle-frame-maximized t)
+
+#+end_src
+
+* Custom Variables
+
+Path definitions for stuff (for now, just Common Lisp stuff), so paths are not hard-coded in multiple places.
+
+#+name: config-vars
+#+begin_src emacs-lisp
+
+  (defconst nils/slime-dir "~/.slime/"
+    "Directory into which SLIME has been 'git clone'-d")
+
+  (defconst nils/hyperspec-location (let* ((expanded-home-dir (expand-file-name "~"))
+                                           (hyperspec-base-dir (file-name-concat expanded-home-dir "cl/hyperspec/")))
+                                      (concat "file://" hyperspec-base-dir))
+    "Base URL to Common Lisp HyperSpec")
+
+  (defconst nils/projects-dir "~/code"
+    "Directory for projectile to search for (code) projects")
+
+#+end_src
+
+* Setting up the Package System
+
+Packages are installed using the ~use-package~ macro on top of the standard =package.el= system. This works well enough, although something fancier like [[https://github.com/radian-software/straight.el][straight.el]] might be something to try out as well. Since ~use-package~ forms (in most cases) contain most of the configuration, this section only shows the basic setup: configuring package repos, initializing the package system, and making sure ~use-package~ is installed and available.
+
+#+name: setup-package-system
+#+begin_src emacs-lisp
+
+  ;; "activate" package system
+  (require 'package)
+
+  ;; list of package archives from which to pull packages
+  (add-to-list 'package-archives
+               '("melpa" . "https://melpa.org/packages/")
+               t)
+  (add-to-list 'package-archives
+               '("melpa-stable" . "https://stable.melpa.org/packages/")
+               t)
+  (add-to-list 'package-archives
+               '("org" . "https://orgmode.org/elpa/")
+               t)
+
+  ;; package repo priorities
+  (setq package-archive-priorities
+        '(("melpa" . 99)
+          ("org" . 10)
+          ("melpa-stable" . 1)
+          ("gnu" . 0))) ; ELPA is our last resort...
+
+  ;; initialize package system
+  (package-initialize)
+
+  ;; fetch available packages
+  ;; option 1: refresh only if there is no package archive (faster)
+  (unless package-archive-contents
+    (package-refresh-contents))
+  ;; option 2: always refresh (safer; use in case emacs shows errors on startup regarding packages not found)
+  ;(package-refresh-contents)
+
+  ;; set up use-package for package management: install it, load it, make sure it automatically installs missing packages
+  (unless (package-installed-p 'use-package)
+    (package-install 'use-package))
+  (require 'use-package)
+  (setq use-package-always-ensure t)
+
+#+end_src
+
+* Packages
+
+This section contains the meat and bones of the config: the custom packages and their configuration. Packages are grouped by certain aspects, and
+have their own sub-sections so navigating this file becomes a little easier.
+
+#+name: install-packages
+#+begin_src emacs-lisp :noweb yes
+
+  ;;--- appearance and visuals ---
+
+  <<packages-visuals>>
+
+  ;;--- suggestions and auto-complete ---
+
+  <<packages-autocomplete>>
+
+  ;;--- general coding/dev stuff ---
+
+  <<packages-programming>>
+
+  ;;--- org mode ---
+
+  <<packages-org>>
+
+  ;;--- Lisp and related things ---
+
+  <<packages-lisp>>
+
+#+end_src
+
+** Visual Stuff
+
+Color themes, customized modeline, icons, etc. Modeline package is from [[https://github.com/doomemacs][Doom Emacs]], so the theme package is also taken from Doom to make sure they work well together.
+
+#+name: packages-visuals
+#+begin_src emacs-lisp
+
+  ;; icons :)
+  ;; on freshly-set-up machines, needs "M-x all-the-icons-install-fonts" on first run, to install necessary OS fonts
+  (use-package all-the-icons)
+  (use-package all-the-icons-dired
+      :hook
+      (dired-mode . all-the-icons-dired-mode))
+
+  ;; slightly adapted solarized theme that works well with doom-modeline
+  ;; other available themes in the package: see https://github.com/doomemacs/themes
+  (use-package doom-themes
+      :init
+      (load-theme 'doom-solarized-dark t)) ; t suppresses "loading themes is dangerous..."-prompt
+
+  ;; clean, modern modeline
+  (use-package doom-modeline
+      :init
+      (doom-modeline-mode 1))
+
+#+end_src
+
+** Suggestions, Auto-Complete, etc.
+
+Auto-complete via [[https://github.com/abo-abo/swiper][Ivy]], with extensions to show some additional info for selections (=ivy-rich=), and enhanced Emacs-functionality like find-file, switch buffer etc. (=counsel=). Some other functionality (like suggestions for key combinations to continue the current, incomplete key combination, or an extended version of the Emacs help system) are also in this section... maybe they should go elsewhere, but for me this whole bunch of functionality seems related.
+
+#+name: packages-autocomplete
+#+begin_src emacs-lisp
+
+  ;; suggestions and selection in minibuffer
+  (use-package ivy
+      :diminish ivy-mode
+      :config
+      (ivy-mode 1)
+      :bind
+      (("C-s" . swiper) ; enhanced search (swiper instead of Emacs standard)
+       :map ivy-minibuffer-map
+       ("TAB" . ivy-alt-done) ; select and apply option (instead of selecting, and applying via <enter>)
+       :map ivy-switch-buffer-map
+       ("TAB" . ivy-done))) ; <tab> will directly switch to the selected buffer
+
+  ;; additional information for ivy selection options in minibuffer
+  (use-package ivy-rich
+      :init
+      (ivy-rich-mode 1))
+
+   ;; ivy-enhanced emacs commands
+  (use-package counsel
+      :bind
+      (("M-x" . counsel-M-x)
+       ("C-x b" . counsel-ibuffer)
+       ("C-x C-f" . counsel-find-file)
+       :map minibuffer-local-map
+       ("C-r" . 'counsel-minibuffer-history)))
+
+  ;; key combination hints for the current, incomplete key chord
+  (use-package which-key
+      :diminish which-key-mode
+      :init
+      (which-key-mode)
+      :config
+      (setq which-key-idle-delay 0.5))
+
+  ;; emacs help system on steroids
+  (use-package helpful
+      :custom
+      (counsel-describe-function-function #'helpful-callable)
+      (counsel-describe-variable-function #'helpful-variable)
+      :bind
+      (([remap describe-function] . counsel-describe-function)
+       ([remap describe-command] . helpful-command)
+       ([remap describe-variable] . counsel-describe-variable)
+       ([remap describe-key] . helpful-key)))
+  
+#+end_src
+
+** General Programming Tools
+
+Tools that I use in most (or maybe all) programming modes. This is stuff like project management, Git, snippets, etc.
+
+#+name: packages-programming
+#+begin_src emacs-lisp
+
+  ;; project management
+  (use-package projectile
+      :diminish projectile-mode
+      :init
+      (when (file-directory-p nils/projects-dir)
+        (setq projectile-project-search-path (list nils/projects-dir)))
+      (setq projectile-switch-project-action #'projectile-dired)
+      :config
+      (projectile-mode)
+      :custom
+      ((projectily-completion-system 'ivy))
+      :bind-keymap
+      ("C-c p" . projectile-command-map))
+
+  ;; ivy/counsel extension for projectile; nicer projects list etc.
+  (use-package counsel-projectile
+      :config
+      (counsel-projectile-mode))
+
+  ;; git
+  (use-package magit)
+
+  ;; snippet functionality
+  (use-package yasnippet
+      :config
+      (setq yas-snippet-dirs `(,(file-name-concat user-emacs-directory "snippets")))
+      (yas-reload-all) ; load snippet tables; necessary since yas-global-mode is not enabled
+      :hook
+      (prog-mode . yas-minor-mode))
+
+  ;; some pre-defined snippets for yasnippet
+  (use-package yasnippet-snippets)
+
+  ;; rainbow parens
+  (use-package rainbow-delimiters
+      :hook
+      (prog-mode . rainbow-delimiters-mode))
+
+#+end_src
+
+** Org-Mode
+
+Still getting used to Org-mode and its seemingly infinite possibilities, so this is work-in-progress
+
+#+name: packages-org
+#+begin_src emacs-lisp :noweb yes
+
+  (defun nils/org-mode-setup ()
+    (org-indent-mode) ; indent content according to outline
+    (visual-line-mode 1)) ; auto-wrap long lines
+
+  (defun nils/org-agenda-mode-setup ()
+    (setq org-agenda-start-day "-2d")) ; agenda view: two past days + future; setting doesn't work in :config or :custom, so set it via :hook
+
+  (defconst nils/org-structure-templates '(("el" . "src emacs-lisp")
+                                           ("cl" . "src lisp")
+                                           ("clj" . "src clojure")
+                                           ("r" . "src R")
+                                           ("py" . "src python")
+                                           ("sh" . "src shell")
+                                           ("sql" . "src sql"))
+    "Custom snippet templates for org-mode to use with org-tempo")
+
+  (defun nils/add-custom-org-structure-templates (templates)
+    "Add the given TEMPLATES for use with org-tempo.
+
+  TEMPLATES must be an alist containing (KEY . VALUE) pairs
+  that are added to the variable `org-structure-template-alist'."
+    (mapcar (lambda (template) (add-to-list 'org-structure-template-alist template)) nils/org-structure-templates))
+
+  ;; font config stuff; doesn't work as intended, so for now it's commented out; TODO: investigate solution + fix this!
+  ;(defun nils/font-or-family (font family)
+  ;  "Check if the given FONT is available, or fall back to FAMILY
+  ;
+  ;Return a list of the form (TYPE . NAME), where
+  ;TYPE is either :font or :family, and
+  ;NAME is the value of either FONT or FAMILY,
+  ;depending on whether FONT is available."
+  ;  (if (x-list-fonts font)
+  ;      '(:font font)
+  ;      '(:family family)))
+  ;
+  ;(defconst nils/font-serif (nils/font-or-family "Noto Serif" "normal"))
+  ;(defconst nils/font-sans (nils/font-or-family "Noto Sans" "sans serif"))
+  ;(defconst nils/font-serif (nils/font-or-family "Noto Sans Mono" "mono"))
+
+  <<capture-templates>>
+
+  <<agenda-commands>>
+
+  (use-package org
+      :config
+      (require 'org-tempo) ; org-mode specific integrated snippets
+      (nils/add-custom-org-structure-templates nils/org-structure-templates)
+      :custom
+      (org-hide-emphasis-markers t)
+      (org-ellipsis " ⋮")
+      (org-agenda-files `(,(file-name-concat org-directory "agenda/")))
+      (org-agenda-span 10)
+      (org-agenda-start-on-weekday nil) ; start today instead of on a fixed weekday
+      (org-todo-keywords '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d!)" "CANCELED(c@)")))
+      (org-capture-templates (doct nils/capture-templates))
+      (org-agenda-custom-commands nils/agenda-commands)
+  ;; more non-working font config stuff, see above; TODO: investigate solution + fix this!
+  ;    :custom-face
+  ;    (org-document-title ((t (:height 2.0))))
+  ;    (org-level-1 ((t (:inherit default :weight bold :height 1.5 (car nils/font-sans) (cdr nils/font-sans)))))
+  ;    (org-level-2 ((t (:height 1.25 (car nils/font-sans) (cdr nils/font-sans)))))
+  ;    (org-level-3 ((t (:height 1.1 (car nils/font-sans) (cdr nils/font-sans)))))
+  ;    (org-level-4 ((t (:height 1.05 (car nils/font-sans) (cdr nils/font-sans)))))
+  ;    (org-level-5 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
+  ;    (org-level-6 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
+  ;    (org-level-7 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
+  ;    (org-level-8 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
+      :hook
+      (org-mode . nils/org-mode-setup)
+      (org-agenda-mode . nils/org-agenda-mode-setup)
+      :bind
+      (("C-c c" . org-capture)
+       ("C-c t" . (lambda () (interactive) (org-capture nil "tt"))))) ; directly capture a GTD inbox task
+
+  ;; more non-working font config stuff, see above; TODO: investigate solution + fix this!
+  ;(defconst headline '(:inherit 'default :weight bold))
+  ;
+  ;(custom-theme-set-faces
+  ;   'user
+  ;   '(org-document-title ((t (:height 2.0))))
+  ;   `(org-level-1 ((t (,@headline ,@nils/font-sans :height 1.75))))
+  ;   `(org-level-2 ((t (,@headline ,@nils/font-sans :height 1.5))))
+  ;   `(org-level-3 ((t (,@headline ,@nils/font-sans :height 1.25))))
+  ;   `(org-level-4 ((t (,@headline ,@nils/font-sans :height 1.1))))
+  ;   `(org-level-5 ((t (,@headline ,@nils/font-sans))))
+  ;   `(org-level-6 ((t (,@headline ,@nils/font-sans))))
+  ;   `(org-level-7 ((t (,@headline ,@nils/font-sans))))
+  ;   `(org-level-8 ((t (,@headline ,@nils/font-sans))))
+  ;   '(org-block ((t (:inherit fixed-pitch))))
+  ;   '(org-code ((t (:inherit (shadow fixed-pitch)))))
+  ;   '(org-document-info ((t (:foreground "dark orange"))))
+  ;   '(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
+  ;   '(org-indent ((t (:inherit (org-hide fixed-pitch)))))
+  ;   '(org-link ((t (:foreground "royal blue" :underline t))))
+  ;   '(org-meta-line ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+  ;   '(org-property-value ((t (:inherit fixed-pitch))) t)
+  ;   '(org-special-keyword ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+  ;   '(org-table ((t (:inherit fixed-pitch :foreground "#83a598"))))
+  ;   '(org-tag ((t (:inherit (shadow fixed-pitch) :weight bold :height 0.8))))
+  ;   '(org-verbatim ((t (:inherit (shadow fixed-pitch))))))
+
+  (use-package org-bullets
+      :after org
+      :custom
+      (org-bullets-bullet-list '("◉"))
+      :hook
+      (org-mode . org-bullets-mode))
+
+  (defun org-mode-update-section-item-stats ()
+    "Update all statistics cookies in the current org-file"
+    (when (equal major-mode 'org-mode)
+      (ignore-errors
+        (org-update-statistics-cookies t))))
+
+  (defadvice org-kill-line (after fix-cookies activate)
+    "fix statistics cookies after org-mode-killing a line"
+    (org-mode-update-section-item-stats))
+
+  (defadvice kill-whole-line (after fix-cookies activate)
+    "fix statistics cookies after killing a line"
+    (org-mode-update-section-item-stats))
+
+  (defun nils/vis-fill-setup ()
+    (setq visual-fill-column-width 150 ; text area width is 150 chars
+          visual-fill-column-center-text t) ; text area is centered
+    (visual-fill-column-mode 1))
+
+  ;; make org-mode feel more wordprocessor-y by giving the text some whitespace at the sides
+  (use-package visual-fill-column
+      :hook
+      (org-mode . nils/vis-fill-setup))
+
+#+end_src
+
+*** Capture Templates
+
+Custom capture templates to use with =org-capture=. These are in [[https://github.com/progfolio/doct][DOCT]] format for better readability, so the corresponding package must be installed as well.
+
+#+name: capture-templates
+#+begin_src emacs-lisp
+
+  ;; declarative org-mode capture templates
+  (use-package doct
+      :commands (doct)) ; defer loading the package until doct function is invoked
+
+  (defconst nils/capture-templates
+    '(("Tasks" :keys "t"
+       :file (lambda () (file-name-concat (car org-agenda-files) "gtd.org")) ; must be a lambda: org-agenda-files is not defined yet
+       :prepend t
+       :empty-lines 1
+       :kill-buffer t
+       :template ("* TODO %^{Description}"
+                  ":PROPERTIES:"
+                  ":Created: %U"
+                  ":Location: %a"
+                  ":END:"
+                  "%?")
+       :children (("Todo" :keys "t"
+                   :headline "Inbox")))))
+
+#+end_src
+
+*** Custom Agenda Commands
+
+WiP; commands for custom variable org-agenda-custom-commands
+
+#+name: agenda-commands
+#+begin_src emacs-lisp
+
+  (defconst nils/agenda-commands
+    '(("o" "Overview"
+       ((agenda "" ((org-deadline-warning-days 7)))
+        (todo "NEXT" ((org-agenda-overriding-header "Next Tasks")))))))
+
+#+end_src
+
+** Lisp
+
+Everything Lisp-related. This includes all variants of Lisp, i.e. Common Lisp, Clojure, Scheme, etc.
+
+#+name: packages-lisp
+#+begin_src emacs-lisp
+
+  ;; SLIME-y Clojure(Script) :)
+  (use-package cider)
+
+  (defun nils/paredit-backward-wrap-round ()
+    "wrap preceding sexp"
+    (interactive)
+    (forward-sexp -1)
+    (paredit-wrap-round)
+    (insert " ")
+    (forward-char -1))
+
+  ;; paren-matching
+  (use-package paredit
+      :hook
+      ((lisp-mode
+        inferior-lisp-mode
+        lisp-interaction-mode
+        emacs-lisp-mode
+        ielm-mode ; inferior emacs lisp mode
+        clojure-mode
+        cider-mode
+        cider-repl-mode
+        scheme-mode
+        eval-expression-minibuffer-setup) . paredit-mode)
+      :bind
+      (:map paredit-mode-map
+       ("C-ö" . paredit-backward-barf-sexp) ; rebind command for easier access on DE keyboard layout
+       ("C-ä" . paredit-forward-barf-sexp) ; rebind command for easier access on DE keyboard layout
+       ("M-)" . nils/paredit-backward-wrap-around)))
+
+  ;; if there is a Slime installation (the version from git), configure it
+  ;; since this isn't installed from an Emacs package, make sure to only configure it if it is actually present
+  (when (file-directory-p nils/slime-dir)
+    (progn
+     ;; add Slime; using the version from Git (instead of MELPA), so we need to tell Emacs where to find it
+     (add-to-list 'load-path nils/slime-dir)
+     (require 'slime-autoloads)
+     (setq inferior-lisp-program "sbcl")
+     ;; to use custom SBCL core including pre-loaded packages (e.g. sb-bsd-sockets, sb-posix, asdf, ...),
+     ;; see https://common-lisp.net/project/slime/doc/html/Loading-Swank-faster.html#Loading-Swank-faster
+     (setq slime-lisp-implementations
+           '((sbcl ("sbcl"))
+             (abcl ("abcl"))))
+     ;; SLIME/Common Lisp hooks
+     (add-hook 'slime-repl-mode-hook (lambda () (paredit-mode 1)))
+     (add-hook 'lisp-mode-hook (lambda () (slime-mode 1)))
+     (add-hook 'inferior-lisp-mode-hook (lambda () (inferior-slime-mode 1)))))
+
+  ;; SLIME/Common Lisp config stuff
+  (setq lisp-indent-function 'common-lisp-indent-function
+        slime-complete-symbol-function 'slime-fuzzy-complete-symbol
+        common-lisp-hyperspec-root nils/hyperspec-location)
+
+#+end_src
+
+* Miscellaneous Stuff
+
+The things in this section should probably go elsewhere.
+
+** TODO find a better place for this stuff and move it there
+
+#+name: misc-settings
+#+begin_src emacs-lisp
+
+  ;; turn on line numbers on the left, and current column in the mode line
+  (global-display-line-numbers-mode)
+  (column-number-mode)
+
+  ;; turn line numbers off for some modes (e.g. shell)
+  (dolist (mode '(shell-mode-hook
+                  eshell-mode-hook
+                  org-mode-hook))
+    (add-hook mode (lambda () (display-line-numbers-mode 0))))
+
+  ;; disable VC for Git (-> Magit for Git, VC for everything else)
+  (setq vc-handled-backends (delq 'Git vc-handled-backends))
+  ;; to also back up files under VCS control, uncomment this:
+  ;; (setq vc-make-backup-files t)
+  
+#+end_src
+
+* Key Bindings
+
+This block contains custom key bindings for some functionality I got used to in other editors, or that I just found useful.
+
+#+name: keybindings
+#+begin_src emacs-lisp
+
+  ;;--- helper functions (for keybindings etc.) ---
+
+  (defun nils/open-line-below ()
+    (interactive)
+    (end-of-line)
+    (newline)
+    (indent-for-tab-command))
+
+  (defun nils/open-line-above ()
+    (interactive)
+    (beginning-of-line)
+    (newline)
+    (forward-line -1)
+    (indent-for-tab-command))
+
+  (defun nils/move-line-down ()
+    (interactive)
+    (let ((col (current-column)))
+      (forward-line)
+      (transpose-lines 1)
+      (forward-line -1)
+      (move-to-column col)))
+
+  (defun nils/move-line-up ()
+    (interactive)
+    (let ((col (current-column)))
+      (transpose-lines 1)
+      (forward-line -2)
+      (move-to-column col)))
+
+
+  ;;--- global key bindings ---
+
+  ;; insert empty line below/above current line
+  (global-set-key (kbd "<C-return>") 'nils/open-line-below)
+  (global-set-key (kbd "<C-S-return>") 'nils/open-line-above)
+
+  ;; move current line down/up (i.e. swap current line with the one below/above)
+  (global-set-key (kbd "<C-S-down>") 'nils/move-line-down)
+  (global-set-key (kbd "<C-S-up>") 'nils/move-line-up)
+
+  ;; key bindings for more efficient moving between windows
+  (global-set-key (kbd "C-x <up>") 'windmove-up)
+  (global-set-key (kbd "C-x <down>") 'windmove-down)
+  (global-set-key (kbd "C-x <left>") 'windmove-left)
+  (global-set-key (kbd "C-x <right>") 'windmove-right)
+
+  ;; C-n/C-p x10
+  (global-set-key (kbd "C-S-n")
+                  (lambda ()
+                    (interactive)
+                    (ignore-errors (next-line 10))))
+  (global-set-key (kbd "C-S-p")
+                  (lambda ()
+                    (interactive)
+                    (ignore-errors (previous-line 10))))
+
+  ;; join current and next line by pulling next line up into current line
+  (global-set-key (kbd "M-j")
+                  (lambda ()
+                    (interactive)
+                    (join-line -1)))
+
+#+end_src
+
+* Standard Emacs Functionality
+
+Some functionality in Emacs comes disabled by default, so some of those functions I want need to be enabled explicitly.
+
+#+name: emacs-features
+#+begin_src emacs-lisp
+
+  ;; enable up-/down-case selected region functions (C-x C-u / C-x C-l)
+  (put 'upcase-region 'disabled nil)
+  (put 'downcase-region 'disabled nil)
+
+#+end_src
