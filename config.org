@@ -189,6 +189,8 @@ have their own sub-sections so navigating this file becomes a little easier.
 
 Color themes, customized modeline, icons, etc. Modeline package is from [[https://github.com/doomemacs][Doom Emacs]], so the theme package is also taken from Doom to make sure they work well together.
 
+*Note:* make sure to run =M-x= ~all-the-icons-install-fonts~ after installing the "all-the-icons" package to download the necessary font files!
+
 #+name: packages-visuals
 #+begin_src emacs-lisp
 
