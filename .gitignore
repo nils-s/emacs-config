@@ -17,7 +17,9 @@ eln-cache/
 eshell/
 # folder with images generated for org-mode LaTeX preview
 ltximg/
-transient/
+# we don't need transient's history etc, but we do want to track custom levels
+transient/*
+!transient/levels.el
 bookmarks
 # file with auto-generated customize stuff; there shouldn't be anything worth saving in there
 custom.el
