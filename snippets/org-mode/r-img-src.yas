@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: org-mode R src block with image output
+# contributor: nils-s
+# key: rimg
+# --
+#+begin_src R :file "${1:img/${2:FILENAME}}" :results output graphics file :exports both
+$0
+#+end_src

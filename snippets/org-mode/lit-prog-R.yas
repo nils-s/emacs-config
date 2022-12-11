@@ -1,0 +1,13 @@
+# -*- mode: snippet -*-
+# name: literate programming / reproducible research document with R code
+# contributor: nils-s
+# key: lit-prog-r
+# --
+#+TITLE: ${1:TITLE}
+#+AUTHOR: nils-s
+#+OPTIONS: toc:nil
+#+PROPERTY: header-args:R :session ${2:SESSION-NAME} :tangle $2.R
+
+* ${3:CHAPTER1}
+
+$0
