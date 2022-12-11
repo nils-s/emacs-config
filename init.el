@@ -288,6 +288,24 @@ The value of this variable is applied via `org-babel-do-load-languages'.")
 (use-package org
     :config
     (require 'org-tempo) ; org-mode specific integrated snippets
+    (require 'ox-latex)  ; org-mode exporter for LaTeX
+    (add-to-list 'org-latex-packages-alist '("" "listings")) ; for lstlisting environments
+    (add-to-list 'org-latex-packages-alist '("" "xcolor")) ; colors and color names
+    (add-to-list 'org-latex-packages-alist '("lighttt" "lmodern")) ; latin modern fonts (light tt-font); default ttfamily font has no bold face
+    (setq org-latex-listings t) ; export src blocks as lstlisting-environments (instead of verbatim); needs "listings" package (see above)
+    (setq org-latex-listings-options '(("basicstyle" "\\ttfamily") ; basic style: monospaced font for code
+                                       ("backgroundcolor" "\\color{lightgray!10}") ; lightgray is too dark -> 10% lightgray, 90% white
+                                       ("xleftmargin" "1cm") ; alternatively: \parindent (if not set to 0)
+                                       ("breaklines" "true") ; auto-wrap long lines
+                                       ("keywordstyle" "\\bfseries") ; bold keywords (needs non-default font if used together with ttfamily)
+                                       ("commentstyle" "\\itshape\\color{darkgray}") ; slightly tone down the comments
+                                       ("numbers" "left") ; line numbers
+                                       ("numberstyle" "\\footnotesize\\color{darkgray}") ; make line numbers less prominent
+                                       ("numbersep" ".5cm") ; sizing guideline: framesep + size of frame + offset from frame
+                                       ("frame" "L") ; double line on the left
+                                       ("framesep" ".25cm") ; some breathing room between frame and code
+                                       ("tabsize" "2") ; one tab = 2 spaces
+                                       ("captionpos" "t"))) ; does not seem to override captionpos? might need manual fixing in exported file
     (nils/add-custom-org-structure-templates nils/org-structure-templates)
     :custom
     (org-hide-emphasis-markers t)
