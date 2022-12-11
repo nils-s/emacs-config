@@ -186,7 +186,10 @@
     (setq yas-snippet-dirs `(,(file-name-concat user-emacs-directory "snippets")))
     (yas-reload-all) ; load snippet tables; necessary since yas-global-mode is not enabled
     :hook
-    (prog-mode . yas-minor-mode))
+    ((prog-mode
+      org-mode
+      text-mode
+      snippet-mode) . yas-minor-mode-on))
 
 ;; some pre-defined snippets for yasnippet
 (use-package yasnippet-snippets)
@@ -195,6 +198,9 @@
 (use-package rainbow-delimiters
     :hook
     (prog-mode . rainbow-delimiters-mode))
+
+;; Emacs Speaks Statistics
+(use-package ess)
 
 
 ;;--- org mode ---
@@ -222,6 +228,18 @@
 TEMPLATES must be an alist containing (KEY . VALUE) pairs
 that are added to the variable `org-structure-template-alist'."
   (mapcar (lambda (template) (add-to-list 'org-structure-template-alist template)) nils/org-structure-templates))
+
+(defconst nils/org-enabled-languages '((emacs-lisp . t) ; should always be enabled, and is enabled by default
+                                       (clojure . t)
+                                       (latex . t)
+                                       (lisp . t)
+                                       (R . t))
+  "Language integrations that should be available in org-mode.
+
+Must be an alist containing (KEY . VALUE) pairs, where
+KEY is the language to enable (or disable), and
+VALUE is either t or nil.
+The value of this variable is applied via `org-babel-do-load-languages'.")
 
 ;; font config stuff; doesn't work as intended, so for now it's commented out; TODO: investigate solution + fix this!
 ;(defun nils/font-or-family (font family)
@@ -280,6 +298,7 @@ that are added to the variable `org-structure-template-alist'."
     (org-todo-keywords '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d!)" "CANCELED(c@)")))
     (org-capture-templates (doct nils/capture-templates))
     (org-agenda-custom-commands nils/agenda-commands)
+    (org-babel-load-languages nils/org-enabled-languages)
 ;; more non-working font config stuff, see above; TODO: investigate solution + fix this!
 ;    :custom-face
 ;    (org-document-title ((t (:height 2.0))))
