@@ -9,15 +9,15 @@
 (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
 (if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
 (if (fboundp 'menu-bar-mode) (menu-bar-mode -1))
-(setq inhibit-startup-message t)
-(setq inhibit-startup-echo-area-message t)
+(setf inhibit-startup-message t)
+(setf inhibit-startup-echo-area-message t)
 
 ;; prevent customize from polluting our carefully-crafted init file :) instead, store that crap in its own file
 (customize-save-variable 'custom-file (expand-file-name "custom.el" user-emacs-directory))
 (load-file custom-file)
 
 ;; store backup files in their own directory
-(setq backup-directory-alist
+(setf backup-directory-alist
       `(("." . ,(expand-file-name
                  (concat user-emacs-directory "backups")))))
 
@@ -61,7 +61,7 @@
              t)
 
 ;; package repo priorities
-(setq package-archive-priorities
+(setf package-archive-priorities
       '(("melpa" . 99)
         ("org" . 10)
         ("melpa-stable" . 1)
@@ -81,7 +81,7 @@
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
 (require 'use-package)
-(setq use-package-always-ensure t)
+(setf use-package-always-ensure t)
 
 
 ;;; install packages -----------------------------------------------------------
@@ -144,7 +144,7 @@
     :init
     (which-key-mode)
     :config
-    (setq which-key-idle-delay 0.5))
+    (setf which-key-idle-delay 0.5))
 
 ;; emacs help system on steroids
 (use-package helpful
@@ -166,8 +166,8 @@
     :diminish projectile-mode
     :init
     (when (file-directory-p nils/projects-dir)
-      (setq projectile-project-search-path (list nils/projects-dir)))
-    (setq projectile-switch-project-action #'projectile-dired)
+      (setf projectile-project-search-path (list nils/projects-dir)))
+    (setf projectile-switch-project-action #'projectile-dired)
     :config
     (projectile-mode)
     :custom
@@ -186,7 +186,7 @@
 ;; snippet functionality
 (use-package yasnippet
     :config
-    (setq yas-snippet-dirs `(,(file-name-concat user-emacs-directory "snippets")))
+    (setf yas-snippet-dirs `(,(file-name-concat user-emacs-directory "snippets")))
     (yas-reload-all) ; load snippet tables; necessary since yas-global-mode is not enabled
     :hook
     ((prog-mode
@@ -214,7 +214,7 @@
   (visual-line-mode 1)) ; auto-wrap long lines
 
 (defun nils/org-agenda-mode-setup ()
-  (setq org-agenda-start-day "-2d")) ; agenda view: two past days + future; setting doesn't work in :config or :custom, so set it via :hook
+  (setf org-agenda-start-day "-2d")) ; agenda view: two past days + future; setting doesn't work in :config or :custom, so set it via :hook
 
 (defconst nils/org-structure-templates '(("el" . "src emacs-lisp")
                                          ("cl" . "src lisp")
@@ -295,8 +295,8 @@ The value of this variable is applied via `org-babel-do-load-languages'.")
     (add-to-list 'org-latex-packages-alist '("" "listings")) ; for lstlisting environments
     (add-to-list 'org-latex-packages-alist '("" "xcolor")) ; colors and color names
     (add-to-list 'org-latex-packages-alist '("lighttt" "lmodern")) ; latin modern fonts (light tt-font); default ttfamily font has no bold face
-    (setq org-latex-listings t) ; export src blocks as lstlisting-environments (instead of verbatim); needs "listings" package (see above)
-    (setq org-latex-listings-options '(("basicstyle" "\\ttfamily") ; basic style: monospaced font for code
+    (setf org-latex-listings t) ; export src blocks as lstlisting-environments (instead of verbatim); needs "listings" package (see above)
+    (setf org-latex-listings-options '(("basicstyle" "\\ttfamily") ; basic style: monospaced font for code
                                        ("backgroundcolor" "\\color{lightgray!10}") ; lightgray is too dark -> 10% lightgray, 90% white
                                        ("xleftmargin" "1cm") ; alternatively: \parindent (if not set to 0)
                                        ("breaklines" "true") ; auto-wrap long lines
@@ -387,7 +387,7 @@ The value of this variable is applied via `org-babel-do-load-languages'.")
   (org-mode-update-section-item-stats))
 
 (defun nils/vis-fill-setup ()
-  (setq visual-fill-column-width 150 ; text area width is 150 chars
+  (setf visual-fill-column-width 150 ; text area width is 150 chars
         visual-fill-column-center-text t) ; text area is centered
   (visual-fill-column-mode 1))
 
@@ -437,10 +437,10 @@ The value of this variable is applied via `org-babel-do-load-languages'.")
    ;; add Slime; using the version from Git (instead of MELPA), so we need to tell Emacs where to find it
    (add-to-list 'load-path nils/slime-dir)
    (require 'slime-autoloads)
-   (setq inferior-lisp-program "sbcl")
+   (setf inferior-lisp-program "sbcl")
    ;; to use custom SBCL core including pre-loaded packages (e.g. sb-bsd-sockets, sb-posix, asdf, ...),
    ;; see https://common-lisp.net/project/slime/doc/html/Loading-Swank-faster.html#Loading-Swank-faster
-   (setq slime-lisp-implementations
+   (setf slime-lisp-implementations
          '((sbcl ("sbcl"))
            (abcl ("abcl"))))
    ;; SLIME/Common Lisp hooks
@@ -449,7 +449,7 @@ The value of this variable is applied via `org-babel-do-load-languages'.")
    (add-hook 'inferior-lisp-mode-hook (lambda () (inferior-slime-mode 1)))))
 
 ;; SLIME/Common Lisp config stuff
-(setq lisp-indent-function 'common-lisp-indent-function
+(setf lisp-indent-function 'common-lisp-indent-function
       slime-complete-symbol-function 'slime-fuzzy-complete-symbol
       common-lisp-hyperspec-root nils/hyperspec-location)
 
@@ -469,9 +469,9 @@ The value of this variable is applied via `org-babel-do-load-languages'.")
   (add-hook mode (lambda () (display-line-numbers-mode 0))))
 
 ;; disable VC for Git (-> Magit for Git, VC for everything else)
-(setq vc-handled-backends (delq 'Git vc-handled-backends))
+(setf vc-handled-backends (delq 'Git vc-handled-backends))
 ;; to also back up files under VCS control, uncomment this:
-;; (setq vc-make-backup-files t)
+;; (setf vc-make-backup-files t)
 
 
 ;;; key bindings ---------------------------------------------------------------
