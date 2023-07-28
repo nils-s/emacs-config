@@ -31,8 +31,11 @@
 (defconst nils/slime-dir "~/.slime/"
   "Directory into which SLIME has been 'git clone'-d")
 
-(defconst nils/hyperspec-location (let* ((expanded-home-dir (expand-file-name "~"))
-                                         (hyperspec-base-dir (file-name-concat expanded-home-dir "cl/hyperspec/")))
+(defconst nils/common-lisp-dir "~/cl"
+  "Base directory for Common Lisp stuff, e.g. HyperSpec, Quicklisp packages, ...")
+
+(defconst nils/hyperspec-location (let* ((expanded-cl-dir (expand-file-name nils/common-lisp-dir))
+                                         (hyperspec-base-dir (file-name-concat expanded-cl-dir "hyperspec/")))
                                     (concat "file://" hyperspec-base-dir))
   "Base URL to Common Lisp HyperSpec")
 
