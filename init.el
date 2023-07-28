@@ -547,3 +547,11 @@ The value of this variable is applied via `org-babel-do-load-languages'.")
 ;; enable up-/down-case selected region functions (C-x C-u / C-x C-l)
 (put 'upcase-region 'disabled nil)
 (put 'downcase-region 'disabled nil)
+
+;; kill dired buffer when selecting new directory; prevents lots of dired buffers when jumping between lots of directories
+(setf dired-kill-when-opening-new-dired-buffer t)
+;; better dired format: directories before files + properly-formatted date and time
+(setf dired-listing-switches (combine-and-quote-strings '("-al" "--group-directories-first" "--time-style=+%d-%m-%Y %H:%M:%S")))
+
+;; always use y/n for confirmation (instead of yes/no)
+(fset 'yes-or-no-p 'y-or-n-p)
