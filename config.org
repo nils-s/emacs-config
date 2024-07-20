@@ -250,6 +250,9 @@ Auto-complete via [[https://github.com/abo-abo/swiper][Ivy]], with extensions to
        :map minibuffer-local-map
        ("C-r" . 'counsel-minibuffer-history)))
 
+  ;; key bindings grouped by common prefix
+  (use-package hydra)
+
   ;; key combination hints for the current, incomplete key chord
   (use-package which-key
       :diminish which-key-mode
@@ -268,7 +271,7 @@ Auto-complete via [[https://github.com/abo-abo/swiper][Ivy]], with extensions to
        ([remap describe-command] . helpful-command)
        ([remap describe-variable] . counsel-describe-variable)
        ([remap describe-key] . helpful-key)))
-  
+
 #+end_src
 
 ** General Programming Tools
@@ -690,12 +693,6 @@ This block contains custom key bindings for some functionality I got used to in 
   (global-set-key (kbd "<C-S-down>") 'nils/move-line-down)
   (global-set-key (kbd "<C-S-up>") 'nils/move-line-up)
 
-  ;; key bindings for more efficient moving between windows
-  (global-set-key (kbd "C-x <up>") 'windmove-up)
-  (global-set-key (kbd "C-x <down>") 'windmove-down)
-  (global-set-key (kbd "C-x <left>") 'windmove-left)
-  (global-set-key (kbd "C-x <right>") 'windmove-right)
-
   ;; C-n/C-p x10
   (global-set-key (kbd "C-S-n")
                   (lambda ()
@@ -711,6 +708,30 @@ This block contains custom key bindings for some functionality I got used to in 
                   (lambda ()
                     (interactive)
                     (join-line -1)))
+
+  ;; hydra for window management
+  (defhydra hydra-window (:hint nil)
+    "
+  Split:         _x_ horizontal^    ^_v_ertical
+  Move:          _h_ left  _j_ down  _k_ up  _l_ right
+  Move splitter: _H_ left  _J_ down  _K_ up  _L_ right
+  Delete:        _o_ther windows^   ^_b_ selected buffer
+  "
+    ("h" windmove-left)
+    ("j" windmove-down)
+    ("k" windmove-up)
+    ("l" windmove-right)
+    ;; H/J/K/L: hydra-move-splitter-... does not seem to work :/
+    ("H" shrink-window-horizontally)
+    ("J" enlarge-window)
+    ("K" shrink-window)
+    ("L" enlarge-window-horizontally)
+    ("v" split-window-right)
+    ("x" split-window-below)
+    ("o" delete-other-windows)
+    ("b" kill-current-buffer)
+    ("q" nil "quit" :color blue))
+  (define-key global-map (kbd "C-S-f") 'hydra-window/body)
 
 #+end_src
 
