@@ -394,6 +394,24 @@ depending on whether FONT is available."
     :hook
     (org-mode . nils/vis-fill-setup))
 
+;; org-roam for personal knowledge management
+(use-package org-roam
+    :init
+    (setf org-roam-v2-ack t)
+    :config
+    (org-roam-setup)
+    (org-roam-db-autosync-mode)
+    (require 'org-roam-dailies)
+    :custom
+    (org-roam-directory (file-name-concat org-directory "roam/"))
+    (org-roam-dailies-directory "daily/") ; relative to org-roam-directory
+    :bind
+    (("C-c n f" . org-roam-node-find)
+     ("C-c n i" . org-roam-node-insert)
+     ("C-c n l" . org-roam-buffer-toggle))
+    :bind-keymap
+    ("C-c n d" . org-roam-dailies-map))
+
 
 ;;--- Lisp and related things ---
 
