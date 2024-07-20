@@ -101,7 +101,7 @@
 ;; other available themes in the package: see https://github.com/doomemacs/themes
 (use-package doom-themes
     :init
-    (load-theme 'doom-solarized-dark t)) ; t suppresses "loading themes is dangerous..."-prompt
+    (load-theme 'doom-solarized-light t)) ; t suppresses "loading themes is dangerous..."-prompt
 
 ;; clean, modern modeline
 (use-package doom-modeline
@@ -244,21 +244,20 @@ KEY is the language to enable (or disable), and
 VALUE is either t or nil.
 The value of this variable is applied via `org-babel-do-load-languages'.")
 
-;; font config stuff; doesn't work as intended, so for now it's commented out; TODO: investigate solution + fix this!
-;(defun nils/font-or-family (font family)
-;  "Check if the given FONT is available, or fall back to FAMILY
-;
-;Return a list of the form (TYPE . NAME), where
-;TYPE is either :font or :family, and
-;NAME is the value of either FONT or FAMILY,
-;depending on whether FONT is available."
-;  (if (x-list-fonts font)
-;      '(:font font)
-;      '(:family family)))
-;
-;(defconst nils/font-serif (nils/font-or-family "Noto Serif" "normal"))
-;(defconst nils/font-sans (nils/font-or-family "Noto Sans" "sans serif"))
-;(defconst nils/font-serif (nils/font-or-family "Noto Sans Mono" "mono"))
+(defun nils/font-or-family (font family)
+  "Check if the given FONT is available, or fall back to FAMILY
+
+Return a list of the form (TYPE . NAME), where
+TYPE is either :font or :family, and
+NAME is the value of either FONT or FAMILY,
+depending on whether FONT is available."
+  (if (x-list-fonts font)
+      '(:font font)
+      '(:family family)))
+
+(defconst nils/font-serif (nils/font-or-family "Noto Serif" "normal"))
+(defconst nils/font-sans (nils/font-or-family "Noto Sans" "sans serif"))
+(defconst nils/font-mono (nils/font-or-family "Noto Sans Mono" "mono"))
 
 
 ;; declarative org-mode capture templates
@@ -320,17 +319,16 @@ The value of this variable is applied via `org-babel-do-load-languages'.")
     (org-capture-templates (doct nils/capture-templates))
     (org-agenda-custom-commands nils/agenda-commands)
     (org-babel-load-languages nils/org-enabled-languages)
-;; more non-working font config stuff, see above; TODO: investigate solution + fix this!
-;    :custom-face
-;    (org-document-title ((t (:height 2.0))))
-;    (org-level-1 ((t (:inherit default :weight bold :height 1.5 (car nils/font-sans) (cdr nils/font-sans)))))
-;    (org-level-2 ((t (:height 1.25 (car nils/font-sans) (cdr nils/font-sans)))))
-;    (org-level-3 ((t (:height 1.1 (car nils/font-sans) (cdr nils/font-sans)))))
-;    (org-level-4 ((t (:height 1.05 (car nils/font-sans) (cdr nils/font-sans)))))
-;    (org-level-5 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
-;    (org-level-6 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
-;    (org-level-7 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
-;    (org-level-8 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
+    :custom-face
+    (org-document-title ((t (:height 2.0))))
+    (org-level-1 ((t (:inherit default :weight bold :height 1.5 (car nils/font-sans) (cdr nils/font-sans)))))
+    (org-level-2 ((t (:height 1.25 (car nils/font-sans) (cdr nils/font-sans)))))
+    (org-level-3 ((t (:height 1.1 (car nils/font-sans) (cdr nils/font-sans)))))
+    (org-level-4 ((t (:height 1.05 (car nils/font-sans) (cdr nils/font-sans)))))
+    (org-level-5 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
+    (org-level-6 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
+    (org-level-7 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
+    (org-level-8 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
     :hook
     (org-mode . nils/org-mode-setup)
     (org-agenda-mode . nils/org-agenda-mode-setup)
