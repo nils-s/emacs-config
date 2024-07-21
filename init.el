@@ -430,9 +430,16 @@ depending on whether FONT is available."
   (insert " ")
   (forward-char -1))
 
+;; paredit-mode in the minibuffer has stopped working at some point, RET would insert a newline instead of evaluating the expression
+;; solution found here: https://shawnhoover.dev/notes/emacs-paredit-eval-minibuffer.html (CC-BY 4.0)
+(defun nils/eval-minibuffer-enable-paredit ()
+  (enable-paredit-mode)
+  (unbind-key (kbd "RET") paredit-mode-map))
+
 ;; paren-matching
 (use-package paredit
     :hook
+    (eval-expression-minibuffer-setup . nils/eval-minibuffer-enable-paredit)
     ((lisp-mode
       inferior-lisp-mode
       lisp-interaction-mode
@@ -441,8 +448,7 @@ depending on whether FONT is available."
       clojure-mode
       cider-mode
       cider-repl-mode
-      scheme-mode
-      eval-expression-minibuffer-setup) . paredit-mode)
+      scheme-mode) . paredit-mode)
     :bind
     (:map paredit-mode-map
      ("C-ö" . paredit-backward-barf-sexp) ; rebind command for easier access on DE keyboard layout
