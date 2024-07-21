@@ -214,7 +214,8 @@
 
 (defun nils/org-mode-setup ()
   (org-indent-mode) ; indent content according to outline
-  (visual-line-mode 1)) ; auto-wrap long lines
+  (visual-line-mode 1) ; auto-wrap long lines
+  (variable-pitch-mode 1)) ; enable variable-pitch (i.e. proportional) fonts
 
 (defun nils/org-agenda-mode-setup ()
   (setf org-agenda-start-day "-2d")) ; agenda view: two past days + future; setting doesn't work in :config or :custom, so set it via :hook
@@ -247,20 +248,15 @@ KEY is the language to enable (or disable), and
 VALUE is either t or nil.
 The value of this variable is applied via `org-babel-do-load-languages'.")
 
-(defun nils/font-or-family (font family)
-  "Check if the given FONT is available, or fall back to FAMILY
+(defconst nils/font-serif '(:family "Noto Serif"))
+(defconst nils/font-sans '(:family "Noto Sans"))
+(defconst nils/font-mono '(:family "Noto Sans Mono"))
 
-Return a list of the form (TYPE . NAME), where
-TYPE is either :font or :family, and
-NAME is the value of either FONT or FAMILY,
-depending on whether FONT is available."
-  (if (x-list-fonts font)
-      `(:font ,font)
-      `(:family ,family)))
-
-(defconst nils/font-serif (nils/font-or-family "Noto Serif" "normal"))
-(defconst nils/font-sans (nils/font-or-family "Noto Sans" "sans serif"))
-(defconst nils/font-mono (nils/font-or-family "Noto Sans Mono" "mono"))
+;; set default fonts for variable-pitch-mode, which will be enabled for org-mode
+(custom-theme-set-faces
+ 'user
+ `(variable-pitch ((t (,@nils/font-serif))))
+ `(fixed-pitch ((t (,@nils/font-mono)))))
 
 
 ;; declarative org-mode capture templates
@@ -323,48 +319,27 @@ depending on whether FONT is available."
     (org-agenda-custom-commands nils/agenda-commands)
     (org-babel-load-languages nils/org-enabled-languages)
     :custom-face
-    (org-document-title ((t (:height 2.0))))
-    (org-level-1 ((t (:inherit default :weight bold :height 1.5 (car nils/font-sans) (cdr nils/font-sans)))))
-    (org-level-2 ((t (:height 1.25 (car nils/font-sans) (cdr nils/font-sans)))))
-    (org-level-3 ((t (:height 1.1 (car nils/font-sans) (cdr nils/font-sans)))))
-    (org-level-4 ((t (:height 1.05 (car nils/font-sans) (cdr nils/font-sans)))))
-    (org-level-5 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
-    (org-level-6 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
-    (org-level-7 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
-    (org-level-8 ((t ((car nils/font-sans) (cdr nils/font-sans)))))
+    ;; title styling (larger font size and sans-serif font)
+    (org-document-title ((t (:height 2.0 ,@nils/font-sans))))
+    (org-level-1 ((t (:inherit default :weight bold :height 1.5 ,@nils/font-sans))))
+    (org-level-2 ((t (:height 1.25 ,@nils/font-sans))))
+    (org-level-3 ((t (:height 1.1 ,@nils/font-sans))))
+    (org-level-4 ((t (:height 1.05 ,@nils/font-sans))))
+    (org-level-5 ((t (,@nils/font-sans))))
+    (org-level-6 ((t (,@nils/font-sans))))
+    (org-level-7 ((t (,@nils/font-sans))))
+    (org-level-8 ((t (,@nils/font-sans))))
+    ;; some faces should be fixed-pitch, e.g. code, indentation, tables, etc.
+    (org-block ((t (:inherit fixed-pitch))))
+    (org-code ((t (:inherit fixed-pitch))))
+    (org-indent ((t (:inherit (org-hide fixed-pitch)))))
+    (org-table ((t (:inherit fixed-pitch))))
     :hook
     (org-mode . nils/org-mode-setup)
     (org-agenda-mode . nils/org-agenda-mode-setup)
     :bind
     (("C-c c" . org-capture)
      ("C-c t" . (lambda () (interactive) (org-capture nil "tt"))))) ; directly capture a GTD inbox task
-
-;; more non-working font config stuff, see above; TODO: investigate solution + fix this!
-;(defconst headline '(:inherit 'default :weight bold))
-;
-;(custom-theme-set-faces
-;   'user
-;   '(org-document-title ((t (:height 2.0))))
-;   `(org-level-1 ((t (,@headline ,@nils/font-sans :height 1.75))))
-;   `(org-level-2 ((t (,@headline ,@nils/font-sans :height 1.5))))
-;   `(org-level-3 ((t (,@headline ,@nils/font-sans :height 1.25))))
-;   `(org-level-4 ((t (,@headline ,@nils/font-sans :height 1.1))))
-;   `(org-level-5 ((t (,@headline ,@nils/font-sans))))
-;   `(org-level-6 ((t (,@headline ,@nils/font-sans))))
-;   `(org-level-7 ((t (,@headline ,@nils/font-sans))))
-;   `(org-level-8 ((t (,@headline ,@nils/font-sans))))
-;   '(org-block ((t (:inherit fixed-pitch))))
-;   '(org-code ((t (:inherit (shadow fixed-pitch)))))
-;   '(org-document-info ((t (:foreground "dark orange"))))
-;   '(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
-;   '(org-indent ((t (:inherit (org-hide fixed-pitch)))))
-;   '(org-link ((t (:foreground "royal blue" :underline t))))
-;   '(org-meta-line ((t (:inherit (font-lock-comment-face fixed-pitch)))))
-;   '(org-property-value ((t (:inherit fixed-pitch))) t)
-;   '(org-special-keyword ((t (:inherit (font-lock-comment-face fixed-pitch)))))
-;   '(org-table ((t (:inherit fixed-pitch :foreground "#83a598"))))
-;   '(org-tag ((t (:inherit (shadow fixed-pitch) :weight bold :height 0.8))))
-;   '(org-verbatim ((t (:inherit (shadow fixed-pitch))))))
 
 (use-package org-bullets
     :after org
