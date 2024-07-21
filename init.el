@@ -255,8 +255,8 @@ TYPE is either :font or :family, and
 NAME is the value of either FONT or FAMILY,
 depending on whether FONT is available."
   (if (x-list-fonts font)
-      '(:font font)
-      '(:family family)))
+      `(:font ,font)
+      `(:family ,family)))
 
 (defconst nils/font-serif (nils/font-or-family "Noto Serif" "normal"))
 (defconst nils/font-sans (nils/font-or-family "Noto Sans" "sans serif"))
