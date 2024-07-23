@@ -418,7 +418,7 @@ Still getting used to Org-mode and its seemingly infinite possibilities, so this
       (nils/add-custom-org-structure-templates nils/org-structure-templates)
       :custom
       (org-hide-emphasis-markers t)
-      (org-ellipsis " ⋮")
+      (org-ellipsis " …")
       (org-agenda-files `(,(file-name-concat org-directory "agenda/")))
       (org-agenda-span 10)
       (org-agenda-start-on-weekday nil) ; start today instead of on a fixed weekday
@@ -452,7 +452,7 @@ Still getting used to Org-mode and its seemingly infinite possibilities, so this
   (use-package org-bullets
       :after org
       :custom
-      (org-bullets-bullet-list '("◉"))
+      (org-bullets-bullet-list '("◉" "●" "○" "•" "•" "•" "•" "•"))
       :hook
       (org-mode . org-bullets-mode))
 

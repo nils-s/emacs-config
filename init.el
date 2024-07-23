@@ -320,7 +320,7 @@ The value of this variable is applied via `org-babel-do-load-languages'.")
     (nils/add-custom-org-structure-templates nils/org-structure-templates)
     :custom
     (org-hide-emphasis-markers t)
-    (org-ellipsis " ⋮")
+    (org-ellipsis " …")
     (org-agenda-files `(,(file-name-concat org-directory "agenda/")))
     (org-agenda-span 10)
     (org-agenda-start-on-weekday nil) ; start today instead of on a fixed weekday
@@ -354,7 +354,7 @@ The value of this variable is applied via `org-babel-do-load-languages'.")
 (use-package org-bullets
     :after org
     :custom
-    (org-bullets-bullet-list '("◉"))
+    (org-bullets-bullet-list '("◉" "●" "○" "•" "•" "•" "•" "•"))
     :hook
     (org-mode . org-bullets-mode))
 
