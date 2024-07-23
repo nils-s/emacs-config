@@ -248,9 +248,19 @@ KEY is the language to enable (or disable), and
 VALUE is either t or nil.
 The value of this variable is applied via `org-babel-do-load-languages'.")
 
-(defconst nils/font-serif '(:family "Noto Serif"))
-(defconst nils/font-sans '(:family "Noto Sans"))
-(defconst nils/font-mono '(:family "Noto Sans Mono"))
+(defun nils/find-available-font (fonts)
+  "From the given list of FONTS, find the first one available on the system."
+  (seq-find (lambda (font) (x-family-fonts font)) fonts))
+
+(defconst nils/font-serif
+  `(:family ,(nils/find-available-font '("Noto Serif" "Source Serif 4" "Bookman Old Style" "Times New Roman")))
+  "Preferred proportional serif font family, depending on which fonts are available on the system.")
+(defconst nils/font-sans
+  `(:family ,(nils/find-available-font '("Noto Sans" "Source Sans 3" "Century Gothic" "Arial")))
+  "Preferred proportional sans-serif font family, depending on which fonts are available on the system.")
+(defconst nils/font-mono
+  `(:family ,(nils/find-available-font '("Noto Sans Mono" "Source Code Pro" "Cascadia Mono" "Courier New")))
+  "Preferred fixed (monospace) font family, depending on which fonts are available on the system")
 
 ;; set default fonts for variable-pitch-mode, which will be enabled for org-mode
 (custom-theme-set-faces
