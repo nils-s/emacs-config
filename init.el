@@ -208,6 +208,19 @@
 ;; Emacs Speaks Statistics
 (use-package ess)
 
+(defun nils/nxml-mode-setup ()
+  (add-to-list 'hs-special-modes-alist
+               '(nxml-mode
+                 "<!--\\|<[^/>]*[^/]>"	; block start regex
+                 "-->\\|</[^/>]*[^/]>"	; block end regex
+                 "<!--"			; comment regex
+                 sgml-skip-tag-forward
+                 nil))
+  (keymap-set nxml-mode-map "C-c h" 'hs-toggle-hiding)
+  (hs-minor-mode))
+
+(add-hook 'nxml-mode-hook 'nils/nxml-mode-setup)
+
 
 ;;--- org mode ---
 

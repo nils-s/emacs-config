@@ -279,7 +279,7 @@ Auto-complete via [[https://github.com/abo-abo/swiper][Ivy]], with extensions to
 Tools that I use in most (or maybe all) programming modes. This is stuff like project management, Git, snippets, etc.
 
 #+name: packages-programming
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :noweb yes
 
   ;; project management
   (use-package projectile
@@ -325,6 +325,26 @@ Tools that I use in most (or maybe all) programming modes. This is stuff like pr
   ;; Emacs Speaks Statistics
   (use-package ess)
 
+  <<nxml-code-folding>>
+
+#+end_src
+
+For code folding, =hideshow= mode (i.e. ~hs-mode~ or ~hs-minor-mode~) can be used. However, it is not pre-configured for XML, so let's fix that (using a snippet found on the Emacs StackExchange [[https://emacs.stackexchange.com/a/3157][here]]):
+
+#+name: nxml-code-folding
+#+begin_src emacs-lisp
+  (defun nils/nxml-mode-setup ()
+    (add-to-list 'hs-special-modes-alist
+                 '(nxml-mode
+                   "<!--\\|<[^/>]*[^/]>"	; block start regex
+                   "-->\\|</[^/>]*[^/]>"	; block end regex
+                   "<!--"			; comment regex
+                   sgml-skip-tag-forward
+                   nil))
+    (keymap-set nxml-mode-map "C-c h" 'hs-toggle-hiding)
+    (hs-minor-mode))
+
+  (add-hook 'nxml-mode-hook 'nils/nxml-mode-setup)
 #+end_src
 
 ** Org-Mode
